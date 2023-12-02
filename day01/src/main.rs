@@ -2,13 +2,13 @@ use regex::Regex;
 use std::fs;
 
 fn main() {
-    let data = read_file("src/day01.txt");
+    let data = read_file("src/input.txt");
 
     let part1: i32 = calibration(data.lines());
-    println!("The sum of the calibration values is: {part1}");
+    println!("Part 1: The sum of the calibration values is: {part1}");
 
     let part2: i32 = calibration_extended(data.lines());
-    println!("The sum of the calibration values is: {part2}");
+    println!("Part 2: The sum of the calibration values is: {part2}");
 }
 
 pub fn calibration(lines: std::str::Lines<'_>) -> i32 {
