@@ -9,13 +9,20 @@ use regex::Regex;
 fn main() {
     let data = read_file("src/input.txt");
     let schematic = Schematic::parse(data.lines().collect());
-    let sum_of_parts : i32 = schematic.parts().iter().map(|c| c.id).sum();
+    let sum_of_parts: i32 = schematic.parts().iter().map(|c| c.id).sum();
     println!("Part 1: The sum of the parts is: {sum_of_parts}");
+
+    let sum_of_ratios: i32 = schematic.gear_ratios().iter().sum();
+    println!("Part 2: The sum of the ratios is: {sum_of_ratios}");
 }
 
 struct Schematic<'a> {
     data: Vec<&'a str>,
     components: Vec<Component>,
+}
+
+pub fn overlaps(r1: &Range<usize>, r2: &Range<usize>) -> bool {
+    r1.start <= r2.end - 1 && r2.start <= r1.end - 1
 }
 
 impl Schematic<'_> {
@@ -44,6 +51,30 @@ impl Schematic<'_> {
             .iter()
             .filter(|c| self.is_part_number(c))
             .collect()
+    }
+
+    pub fn gear_ratios(&self) -> Vec<i32> {
+        let mut ratios = Vec::new();
+        for (line, text) in self.data.iter().enumerate() {
+            let reg = Regex::new(r"(\*)").unwrap();
+
+            for gear in reg.find_iter(text) {
+                let range = max(gear.range().start as i32 - 1, 0) as usize
+                    ..min(gear.range().end + 1, self.data[0].len() - 1);
+                let lines = max(line as i32 - 1, 0) as usize..min(line + 2, self.data.len());
+                let adjacent_components: Vec<&Component> = self
+                    .components
+                    .iter()
+                    .filter(|c| lines.contains(&c.line) && overlaps(&range, &c.range))
+                    .collect();
+
+                if adjacent_components.len() == 2 {
+                    ratios.push(adjacent_components.iter().map(|c| c.id).product());
+                }
+            }
+        }
+
+        ratios
     }
 
     pub fn is_part_number(&self, component: &&Component) -> bool {
@@ -97,5 +128,14 @@ mod test {
         let schematic = Schematic::parse(data.lines().collect());
         let sum_of_parts: i32 = schematic.parts().iter().map(|c| c.id).sum();
         assert_eq!(sum_of_parts, 4361);
+    }
+
+    #[test]
+    fn part2() {
+        let data = read_file("src/test01.txt");
+
+        let schematic = Schematic::parse(data.lines().collect());
+        let sum_of_ratios: i32 = schematic.gear_ratios().iter().sum();
+        assert_eq!(sum_of_ratios, 467835);
     }
 }
