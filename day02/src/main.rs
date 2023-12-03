@@ -9,6 +9,9 @@ fn main() {
         .map(|g| g.id)
         .sum::<i32>();
     println!("Part 1: The sum of the ids is: {sum_of_ids}");
+
+    let sum_of_powers = games.iter().map(|g| g.power()).sum::<i32>();
+    println!("Part 2: The sum of the powers is: {sum_of_powers}");
 }
 
 struct Game {
@@ -64,14 +67,23 @@ impl Game {
     }
 
     pub fn possible_games(games: &Vec<Game>, red: i32, green: i32, blue: i32) -> Vec<&Game> {
-        games.iter().filter(|g| g.contains(red, green, blue)).collect()
+        games
+            .iter()
+            .filter(|g| g.contains(red, green, blue))
+            .collect()
+    }
+
+    pub fn power(&self) -> i32 {
+        self.max_red_cubes() * self.max_green_cubes() * self.max_blue_cubes()
     }
 
     pub fn contains(&self, red: i32, green: i32, blue: i32) -> bool {
-        self.red_cubes() <= red && self.green_cubes() <= green && self.blue_cubes() <= blue
+        self.max_red_cubes() <= red
+            && self.max_green_cubes() <= green
+            && self.max_blue_cubes() <= blue
     }
 
-    pub fn red_cubes(&self) -> i32 {
+    pub fn max_red_cubes(&self) -> i32 {
         *self
             .cubes
             .iter()
@@ -83,7 +95,7 @@ impl Game {
             .unwrap()
     }
 
-    pub fn green_cubes(&self) -> i32 {
+    pub fn max_green_cubes(&self) -> i32 {
         *self
             .cubes
             .iter()
@@ -95,7 +107,7 @@ impl Game {
             .unwrap()
     }
 
-    pub fn blue_cubes(&self) -> i32 {
+    pub fn max_blue_cubes(&self) -> i32 {
         *self
             .cubes
             .iter()
@@ -124,5 +136,15 @@ mod test {
             .map(|g| g.id)
             .sum::<i32>();
         assert_eq!(sum_of_ids, 8);
+    }
+
+    #[test]
+    fn part2() {
+        let data = read_file("src/test01.txt");
+        let sum_of_powers = Game::parse(data.lines())
+            .iter()
+            .map(|g| g.power())
+            .sum::<i32>();
+        assert_eq!(sum_of_powers, 2286);
     }
 }
