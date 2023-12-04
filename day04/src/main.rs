@@ -5,19 +5,18 @@ fn main() {
     let game = CardGame::parse(data.lines());
 
     println!("Part 1: The cards are worth: {}", game.value());
+    println!("Part 2: The number of cards is: {}", game.count_cards());
 }
 
 struct Card {
-    id: i32,
     winners: Vec<i32>,
     numbers: Vec<i32>,
 }
 
 impl Card {
-    pub fn parse(id: i32, data: &str) -> Card {
+    pub fn parse(data: &str) -> Card {
         let data_items: Vec<_> = data.split("|").collect();
         Card {
-            id,
             winners: Self::parse_numbers(data_items[0]),
             numbers: Self::parse_numbers(data_items[1]),
         }
@@ -29,12 +28,15 @@ impl Card {
             .collect()
     }
 
-    pub fn value(&self) -> i32 {
-        let count = self
-            .numbers
+    pub fn winning_count(&self) -> i32 {
+        self.numbers
             .iter()
             .filter(|n| self.winners.contains(n))
-            .count() as i32;
+            .count() as i32
+    }
+
+    pub fn value(&self) -> i32 {
+        let count = self.winning_count();
 
         match count {
             0 => 0,
@@ -49,21 +51,27 @@ struct CardGame {
 
 impl CardGame {
     pub fn parse(lines: std::str::Lines<'_>) -> CardGame {
-        let mut game = CardGame { cards: Vec::new() };
-
-        for line in lines {
-            let data: Vec<_> = line.split(":").collect();
-            let id_text: Vec<_> = data[0].split_whitespace().collect();
-            let id: i32 = id_text[1].parse().unwrap();
-
-            game.cards.push(Card::parse(id, data[1]));
+        CardGame {
+            cards: lines
+                .map(|l| Card::parse(l.split(":").collect::<Vec<_>>()[1]))
+                .collect(),
         }
-
-        game
     }
 
     pub fn value(&self) -> i32 {
         self.cards.iter().map(|c| c.value()).sum()
+    }
+
+    fn count_cards(&self) -> i32 {
+        let mut copies = vec![1; self.cards.len()];
+
+        for (i, card) in self.cards.iter().enumerate() {
+            for c in 0..card.winning_count() {
+                copies[i + 1 + c as usize] += copies[i];
+            }
+        }
+
+        copies.iter().sum()
     }
 }
 
@@ -81,5 +89,13 @@ mod test {
         let game = CardGame::parse(data.lines());
 
         assert_eq!(game.value(), 13);
+    }
+
+    #[test]
+    fn part2() {
+        let data = read_file("src/test01.txt");
+        let game = CardGame::parse(data.lines());
+
+        assert_eq!(game.count_cards(), 30);
     }
 }
